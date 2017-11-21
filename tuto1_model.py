@@ -115,10 +115,13 @@ robot = Robot()
 q0 = rand(robot.model.nq)
 q = rand(robot.model.nq)
 delta_q = q-q0
-nb_loop = 1000
+nb_loop = 100
 while True:
     for i in range(0,nb_loop):
         robot.display(q0+delta_q*i/nb_loop)
-    for i in range(0,nb_loop):
-        robot.display(q-delta_q*i/nb_loop)
+    q0 = q
+    q = rand(robot.model.nq)
+    delta_q = q-q0
+
+        
 
