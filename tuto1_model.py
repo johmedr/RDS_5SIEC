@@ -46,60 +46,64 @@ class Robot:
         self.q0 = zero(7)
 
     def createArm7DOF(self,rootId=0,prefix='',jointPlacement=None):
+        color   = [red,green,blue,transparency] = [1,1,0.78,1.0]
+        colorred = [1.0,0.0,0.0,1.0]
 
+        jointId = rootId
 
-	jointName          = "first_joint"                       # Name of joint.
-	jointPlacement     = jointPlacement if jointPlacement!=None else se3.SE3.Identity()      # SE3 placement of the joint wrt chain init.
-	parent             = rootId                                   # Index of the parent (0 is the universe).
-	jointModel         = se3.JointModelRZ()                  # Type of the joint to be created.
-	jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-	print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
+        name               = prefix+"shoulder1"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = jointPlacement if jointPlacement!=None else se3.SE3.Identity()
+        jointId = self.model.addJoint(jointId,se3.JointModelRZ(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
+        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere1', 0.3,colorred)
+        self.visuals.append( Visual('world/'+prefix+'sphere1',jointId,se3.SE3.Identity()) )
 
-	jointName          = "second_joint"                       # Name of joint.
-        jointPlacement     = se3.SE3.Identity()      # SE3 pla$
-        parent             = parent + 1                              # Index of the parent (0 is the universe$
-        jointModel         = se3.JointModelRY()                  # Type of the joint to be created.
-        jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-        print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
+        name               = prefix+"shoulder2"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = se3.SE3.Identity()
+        jointId = self.model.addJoint(jointId,se3.JointModelRY(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
+        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere2', 0.3,colorred)
+        self.visuals.append( Visual('world/'+prefix+'sphere2',jointId,se3.SE3.Identity()) )
 
-        jointName          = "third_joint"                       # Name of joint.
-        jointPlacement     = se3.SE3.Identity()      # SE3 pla$
-        parent             = parent + 1                              # Index of the parent (0 is the univ$
-        jointModel         = se3.JointModelRX()                  # Type of the joint to be created.
-        jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-        print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
+        name               = prefix+"shoulder3"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = se3.SE3.Identity()
+        jointId = self.model.addJoint(jointId,se3.JointModelRX(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
+        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere3', 0.3,colorred)
+        self.visuals.append( Visual('world/'+prefix+'sphere3',3,se3.SE3.Identity()) )
+        self.viewer.viewer.gui.addBox('world/'+prefix+'upperarm', .1,.1,.5,color)
+        self.visuals.append( Visual('world/'+prefix+'upperarm',jointId,se3.SE3(eye(3),np.matrix([0.,0.,.5]))))
 
-        jointName          = "fourth_joint"                       # Name of joint.
-        jointPlacement     = se3.SE3.Identity()      # SE3 pla$
-        parent             = parent + 1                              # Index of the parent (0 is the univ$
-        jointModel         = se3.JointModelRY()                  # Type of the joint to be created.
-        jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-        print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
+        name               = prefix+"elbow"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = se3.SE3(eye(3),np.matrix( [0,0,1.0] ))
+        jointId = self.model.addJoint(jointId,se3.JointModelRY(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
+        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere4', 0.3,colorred)
+        self.visuals.append( Visual('world/'+prefix+'sphere4',jointId,se3.SE3.Identity()) )
+        self.viewer.viewer.gui.addBox('world/'+prefix+'lowerarm', .1,.1,.5,color)
+        self.visuals.append( Visual('world/'+prefix+'lowerarm',jointId,se3.SE3(eye(3),np.matrix([0.,0.,.5]))))
 
-        jointName          = "fifth_joint"                       # Name of joint.
-        jointPlacement     = se3.SE3.Identity()      # SE3 pla$
-        parent             = parent + 1                              # Index of the parent (0 is the univ$
-        jointModel         = se3.JointModelRX()                  # Type of the joint to be created.
-        jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-        print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
+        name               = prefix+"wrist1"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = se3.SE3(eye(3),np.matrix( [0,0,1.0] ))
+        jointId = self.model.addJoint(jointId,se3.JointModelRX(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
+        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere5', 0.3,colorred)
+        self.visuals.append( Visual('world/'+prefix+'sphere5',jointId,se3.SE3.Identity()) )
 
-        jointName          = "sixth_joint"                       # Name of joint.
-        jointPlacement     = se3.SE3.Identity()      # SE3 pla$
-        parent             = parent + 1                              # Index of the parent (0 is the univ$
-        jointModel         = se3.JointModelRY()                  # Type of the joint to be created.
-        jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-        print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
+        name               = prefix+"wrist2"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = se3.SE3.Identity()
+        jointId = self.model.addJoint(jointId,se3.JointModelRY(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
+        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere6', 0.3,colorred)
+        self.visuals.append( Visual('world/'+prefix+'sphere6',jointId,se3.SE3.Identity()) )
 
-        jointName          = "seventh_joint"                       # Name of joint.
-        jointPlacement     = se3.SE3.Identity()      # SE3 pla$
-        parent             = parent + 1                              # Index of the parent (0 is the univ$
-        jointModel         = se3.JointModelRY()                  # Type of the joint to be created.
-        jointId = self.model.addJoint(parent,jointModel,jointPlacement,jointName)
-        print('Model dimensions: {:d}, {:d}, {:d}'.format(self.model.nq,self.model.nv,self.model.nbodies))
-
-
-
-
+    
     def display(self,q):
         se3.forwardKinematics(self.model,self.data,q)
         for visual in self.visuals:
@@ -108,4 +112,13 @@ class Robot:
 
 
 robot = Robot()
-robot.display(robot.q0)
+q0 = rand(robot.model.nq)
+q = rand(robot.model.nq)
+delta_q = q-q0
+nb_loop = 1000
+while True:
+    for i in range(0,nb_loop):
+        robot.display(q0+delta_q*i/nb_loop)
+    for i in range(0,nb_loop):
+        robot.display(q-delta_q*i/nb_loop)
+
