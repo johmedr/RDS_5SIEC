@@ -1,3 +1,5 @@
+
+
 from pinocchio.utils import *
 from pinocchio.explog import exp,log
 from numpy.linalg import pinv,norm
@@ -54,16 +56,12 @@ class Robot:
         jointPlacement     = jointPlacement if jointPlacement!=None else se3.SE3.Identity()
         jointId = self.model.addJoint(jointId,se3.JointModelRZ(),jointPlacement,jointName)
         self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
-        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere1', 0.3,colorred)
-        self.visuals.append( Visual('world/'+prefix+'sphere1',jointId,se3.SE3.Identity()) )
 
         name               = prefix+"shoulder2"
         jointName,bodyName = [name+"_joint",name+"_body"]
         jointPlacement     = se3.SE3.Identity()
         jointId = self.model.addJoint(jointId,se3.JointModelRY(),jointPlacement,jointName)
         self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
-        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere2', 0.3,colorred)
-        self.visuals.append( Visual('world/'+prefix+'sphere2',jointId,se3.SE3.Identity()) )
 
         name               = prefix+"shoulder3"
         jointName,bodyName = [name+"_joint",name+"_body"]
@@ -90,8 +88,6 @@ class Robot:
         jointPlacement     = se3.SE3(eye(3),np.matrix( [0,0,1.0] ))
         jointId = self.model.addJoint(jointId,se3.JointModelRX(),jointPlacement,jointName)
         self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
-        self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere5', 0.3,colorred)
-        self.visuals.append( Visual('world/'+prefix+'sphere5',jointId,se3.SE3.Identity()) )
 
         name               = prefix+"wrist2"
         jointName,bodyName = [name+"_joint",name+"_body"]
@@ -100,7 +96,14 @@ class Robot:
         self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
         self.viewer.viewer.gui.addSphere('world/'+prefix+'sphere6', 0.3,colorred)
         self.visuals.append( Visual('world/'+prefix+'sphere6',jointId,se3.SE3.Identity()) )
+        self.viewer.viewer.gui.addBox('world/'+prefix+'foot', .3,.1,.1,color)
+        self.visuals.append( Visual('world/'+prefix+'foot',jointId,se3.SE3(eye(3),np.matrix([.3,0.,0.]))))
 
+        name               = prefix+"toe"
+        jointName,bodyName = [name+"_joint",name+"_body"]
+        jointPlacement     = se3.SE3(eye(3), np.matrix( [0.6, 0, 0] ))
+        jointId = self.model.addJoint(jointId,se3.JointModelRY(),jointPlacement,jointName)
+        self.model.appendBodyToJoint(jointId,se3.Inertia.Random(),se3.SE3.Identity())
     
     def display(self,q):
         se3.forwardKinematics(self.model,self.data,q)
@@ -108,18 +111,18 @@ class Robot:
             visual.place( self.viewer,self.data.oMi[visual.jointParent] )
         self.viewer.viewer.gui.refresh()
 
-
-robot = Robot()
-q0 = rand(robot.model.nq)
-q = rand(robot.model.nq)
-delta_q = q-q0
-nb_loop = 100
-while True:
-    for i in range(0,nb_loop):
-        robot.display(q0+delta_q*i/nb_loop)
-    q0 = q
+if __name__ == "__main__": 
+    robot = Robot()
+    q0 = rand(robot.model.nq)
     q = rand(robot.model.nq)
     delta_q = q-q0
+    nb_loop = 100
+    while True:
+        for i in range(0,nb_loop):
+            robot.display(q0+delta_q*i/nb_loop)
+            q0 = q
+            q = rand(robot.model.nq)
+            delta_q = q-q0
 
         
 

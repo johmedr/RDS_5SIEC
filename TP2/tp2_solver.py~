@@ -1,0 +1,19 @@
+import pinocchio as se3
+import numpy as np
+from scipy.optimize import fmin_bfgs
+
+class Solver:
+    def __init__(self, robot, q0 = np.zeros(7)): 
+	self.robot = robot
+        self.q0 = q0
+
+    def cost(self, q, pdes = np.array([0,1,2])): 
+        se3.forwardKinematics(robot.model,robot.data,q)
+        p = robot.data.oMi[i].translation
+        dist = np.linalg.norm(p - pdes) 
+	return dist
+    
+    def minimize(self):
+        stuff = fmin_bfgs(self.cost, self.q0) 
+        qsol = stuff[0]
+        return qsol
