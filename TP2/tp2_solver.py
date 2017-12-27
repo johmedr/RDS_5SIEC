@@ -48,7 +48,7 @@ def rand_dest():
     return 2*np.random.rand(3)
 
 def anim(robot, nb_loop, q0, q):
-    delta_q = (q - q0) / float(nb_loop) * 100
+    delta_q = (q - q0)
     print delta_q
     for i in range(0,nb_loop):
         robot.display(q0+delta_q*i/nb_loop)

@@ -3,10 +3,10 @@ from pinocchio.romeo_wrapper import RomeoWrapper
 from pinocchio.utils import *
 from numpy.linalg import norm
 
-path = '/home/student/models/romeo/'
-urdf = path + 'urdf/romeo.urdf'
+path = '/home/yop/gpto_ws/src/RDS_5SIEC/examples/'
+urdf = path + 'romeo.urdf'
 pkgs = [ path, ]
-robot = RomeoWrapper(urdf,pkgs,se3.JointModelFreeFlyer()) # Load urdf model
+robot = RomeoWrapper(urdf) # Load urdf model
                                   # The robot is loaded with the basis fixed to the world
 robot.initDisplay(loadModel=True) # setup the viewer to display the robot
 
