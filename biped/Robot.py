@@ -8,6 +8,7 @@ from scipy.optimize import fmin_bfgs, minimize
 from pinocchio.explog import exp,log
 import pinocchio as se3
 import gepetto.corbaserver
+import copy
 
 from Display import Display
 from Visual import Visual
@@ -84,18 +85,15 @@ class Robot:
 
         self.cost = None 
 
-    def fake_move(self, q): 
-        tmp_model = self.model
-        tmp_data = self.data
-        se3.forwardKinematics(tmp_model, tmp_data, q)
-        return tmp_model, tmp_data
+    def move(self, q): 
+        se3.forwardKinematics(self.model, self.data, q)
 
     def get_pos(self, jointId, q=None): 
         if q is None:
-            return self.data.oMi[self.torsoId]
+            return self.data.oMi[jointId]
         elif isinstance(q, np.ndarray):
-            model, data = self.fake_move(q)
-            return data.oMi[jointId]
+            se3.forwardKinematics(self.model, self.data, q)
+            return self.data.oMi[jointId]
 
     def get_torso_pos(self, q=None): 
         return self.get_pos(self.torsoId, q)
@@ -105,142 +103,6 @@ class Robot:
 
     def get_right_foot_pos(self, q=None): 
         return self.get_pos(self.rightLegLastJointId, q)
-
-    # def get_default_constraints(self): 
-    #     cons = ()
-    #     """
-    #     Constraint hip rotation on z
-    #     """
-    #     cons += (
-    #             {'type': 'eq', 
-    #               'fun': lambda x: np.array(x[3])}, 
-    #             {'type': 'eq', 
-    #               'fun': lambda x: np.array(x[10])}
-    #             )
-    #     """
-    #     Constraint knees rotation > 0
-    #     """
-    #     cons += (
-    #             {'type': 'ineq', 
-    #               'fun': lambda x: np.array(x[6])}, 
-    #             {'type': 'ineq', 
-    #               'fun': lambda x: np.array(x[13])}
-    #             )
-    #     return cons
-
-    # def get_state_constraints(self): 
-    #     cons = ()
-    #     if self.state is STATE_REST: 
-    #         cons += () 
-
-    # def get_constraint_foot_dont_move(self, side): 
-    #     if side == "left":
-    #         lastJointId = self.leftLegLastJointId
-    #         initPosition = self.leftFootInitPosition
-    #     elif side == "right": 
-    #         lastJointId = self.rightLegLastJointId
-    #         initPosition = self.rightFootInitPosition
-    #     else: 
-    #         raise AttributeError
-
-    #     def constraint_foot_dont_move(q): 
-    #         tmp_model = self.model
-    #         tmp_data = self.data
-    #         # Optimize this with only one call to fwd kinematics by keeping a optimization model and data aside
-    #         se3.forwardKinematics(tmp_model, tmp_data, q)
-    #         return pin2np(tmp_data.oMi[lastJointId].translation - initPosition.translation)
-
-    #     return {'type': 'eq', 
-    #              'fun' : constraint_foot_dont_move}
-
-    # def cost_rest(self, q):
-    #     tmp_model = self.model
-    #     tmp_data = self.data
-
-    #     # target = self.data.oMi[self.torsoInitPosition].translation[:, 0]
-
-
-    #     # target_right = self.data.oMi[self.rightLegLastJointId - 7]
-
-    #     target = self.torsoInitPosition.translation[:,0]
-    #     target[2] -= .5
-    #     self.viewer.viewer.gui.addCylinder('world/cylin', 1,0.5,self.COLORRED)
-    #     self.viewer.place('world/cylin',se3.SE3(eye(3), np.matrix( target ) ))
-    #     se3.forwardKinematics(tmp_model, tmp_data, q)
-    #     return np.linalg.norm(tmp_data.oMi[self.torsoId].translation - target)
-
-    # def test_cost(self, x): 
-    #     tmp_model = self.model 
-    #     tmp_data = self.data
-
-    #     # target = self.data.oMi[self.torsoInitPosition].translation[:, 0]
-
-
-    #     # target_right = self.data.oMi[self.rightLegLastJointId - 7]
-
-    #     target = self.leftFootInitPosition.translation[:,0]
-    #     target[0] = self.FOOT_LY * 0.75 
-    #     target[1] = 0.5
-    #     target[2] = 1.5 + self.FOOT_LZ
-    #     q = self.q0 
-    #     q[4] = x[0]
-    #     q[6] = x[1]
-    #     q[8] = x[2]
-    #     q[11] = x[0]
-    #     q[13] = x[1]
-    #     q[15] = x[2]
-
-    #     self.viewer.viewer.gui.addCylinder('world/cylin', 0.2,0.2,self.COLORRED)
-    #     self.viewer.place('world/cylin',se3.SE3(eye(3), np.matrix( target ) ))
-    #     se3.forwardKinematics(tmp_model, tmp_data, q)
-    #     return np.linalg.norm(tmp_data.oMi[self.leftLegLastJointId].translation - target)
-
-    # def test_solve(self): 
-    #     return fmin_bfgs(self.test_cost, np.zeros(3))
-
-    # def cost_ready(self, q):
-    #     pass
-
-    # def cost_first_step(self, q):
-    #     pass
-
-    # def cost_steady(self, q):
-    #     pass
-
-    # def cost_fly(self, q):
-    #     pass
-
-    # def cost_last_step(self, q):
-    #     pass
-
-    # def switchState(self):
-    #     # ... 
-    #     if self.state is STATE_REST: 
-    #         self.cost = self.cost_rest
-
-    #     elif self.state is STATE_FIRST_STEP: 
-    #         pass 
-    #         # self.cost = self.cost_first_step... 
-    #     elif self.state is STATE_STEADY: 
-    #         # Move CoM to other foot
-    #         pass
-    #     elif self.state is STATE_FLY:
-    #         pass
-    #     elif self.state is STATE_LAST_STEP: 
-    #         pass
-
-    # def solve(self): 
-    #     if self.state is STATE_REST: 
-    #         self.cost = self.cost_rest
-    #         constraints = (self.get_constraint_foot_dont_move("left"), 
-    #                        self.get_constraint_foot_dont_move("right"))
-    #         constraints += DEFAULT_CONSTRAINTS 
-    #         constraints += MOVE_PLANE_XZ_CONSTRAINTS
-    #         constraints += SYMETRIC_CONSTRAINTS
-    #         # constraints += TORSO_CONSTRAINTS_TZ
-    #         q = minimize(fun=self.cost, x0=self.q0, method='SLSQP', constraints=constraints)
-    #         return q
-
 
     def createTorso(self, rootId=0, prefix='', jointPlacement=None): 
         color   = [red,green,blue,transparency] = [1,1,0.78,0.5]
