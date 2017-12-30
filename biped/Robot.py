@@ -75,7 +75,7 @@ class Robot:
         name               = prefix+"torso"
         jointName,bodyName = [name+"_joint",name+"_body"]
         jointPlacement     = jointPlacement if jointPlacement!=None else se3.SE3.Identity()
-        jointId = self.model.addJoint(jointId,se3.JointModelTranslation(),jointPlacement,jointName)
+        jointId = self.model.addJoint(jointId,se3.JointModelFreeFlyer(),jointPlacement,jointName)
         self.model.appendBodyToJoint(jointId,se3.Inertia.Identity(),se3.SE3.Identity())
 
         self.viewer.viewer.gui.addBox('world/'+prefix+'torso',0.5* self.TORSO_LX,0.5*self.TORSO_LY,0.5* self.TORSO_LZ,color)
@@ -140,7 +140,7 @@ class Robot:
 
         name               = prefix+"toe"
         jointName,bodyName = [name+"_joint",name+"_body"]
-        jointPlacement     = se3.SE3(eye(3), np.matrix( [0.75*self.FOOT_LX, 0, 0] ))
+        jointPlacement     = se3.SE3(eye(3), np.matrix( [0, 0, -self.FOOT_LZ] ))
         jointId = self.model.addJoint(jointId,se3.JointModelRY(),jointPlacement,jointName)
         self.model.appendBodyToJoint(jointId,se3.Inertia.Identity(),se3.SE3.Identity())
 
