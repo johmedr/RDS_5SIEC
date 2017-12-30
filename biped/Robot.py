@@ -153,6 +153,7 @@ class Robot:
             visual.place( self.viewer,self.data.oMi[visual.jointParent] )
         self.viewer.viewer.gui.refresh()
         self.q = q
+        return self.q
 
 if __name__ == "__main__": 
     robot = Robot()

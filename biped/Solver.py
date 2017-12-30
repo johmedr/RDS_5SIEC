@@ -29,15 +29,24 @@ class Solver:
         - allowedDoFIds (optionnal) : a list of DoF the solver is allowed to move to solve the problem
             If not filled, all the DoF are used
     """
-    def __init__(self, jointToMoveId, targetPose, robot, allowedDoFIds=None):
+    def __init__(self, jointToMoveId, targetPose, robot, allowedDoFIds=None, display=True, color=None):
         self.jointToMoveId = jointToMoveId
         self.targetPose = targetPose
+        if jointToMoveId == 8:
+            print self.targetPose
         self.robot = robot
         self.q = np.copy(self.robot.q)
+
         if allowedDoFIds is None: 
             self.allowedDoFIds = range(0, self.nq + 1)
         else: 
             self.allowedDoFIds = allowedDoFIds
+
+        if display: 
+            if color is None: 
+                color = [0.7, 0.7, 0.7, 1.]
+            robot.viewer.viewer.gui.addBox("world/target_j" + str(jointToMoveId), .1, .2, .3, color) 
+            robot.viewer.place("world/target_j" + str(jointToMoveId), self.targetPose)
 
     def cost(self, x): 
         q = self.q
@@ -57,18 +66,34 @@ class Solver:
 if __name__ == "__main__": 
     robot = Robot() 
 
+    T_ID = 1
+    LF_ID = 8 
+    RF_ID = 15
+
+    RED = [1., 0., 0., 1.]
+    GREEN = [0., 1., 0., 1.]
+    BLUE = [0., 0., 1., 1.]
+    
+    q = np.copy(robot.display(robot.q0))
+    offset_torso = robot.data.oMi[T_ID].translation - np2pin(np.array([0., 0., 1.]))
+
+    target_left = se3.SE3(robot.data.oMi[LF_ID])
+    target_right = se3.SE3(robot.data.oMi[RF_ID])
+
 
     for i in range(100): 
-        q = robot.q
-        target = se3.SE3.Random()
+        target_torso = se3.SE3.Random()
+        target_torso.translation += offset_torso
 
-        robot.viewer.viewer.gui.addBox("world/target", .5, .5, .5, [0.7, 0.7, 0.7, 1.]) 
-        robot.viewer.place("world/target", target)
+        s_torso = Solver(1, target_torso, robot, allowedDoFIds=range(0, 7), color=RED)
+        q[0:7] = s_torso.minimize()
 
-        s_left = Solver(8, target, robot, allowedDoFIds=range(7, 15))
+        # se3.forwardKinematics(robot.model, robot.data, q)
+
+        s_left = Solver(8, target_left, robot, allowedDoFIds=range(7, 15), color=GREEN)
         q[7:15] = s_left.minimize()
 
-        s_right = Solver(15, target, robot, allowedDoFIds=range(15, 21))
+        s_right = Solver(15, target_right, robot, allowedDoFIds=range(15, 21), color=BLUE)
         q[15:22] = s_right.minimize()
 
         robot.display(q)
