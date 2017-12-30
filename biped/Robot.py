@@ -13,17 +13,6 @@ import copy
 from Display import Display
 from Visual import Visual
 from utils import *
-from constraints import *
-
-STATE_REST = 0
-STATE_FIRST_STEP = 1
-STATE_STEADY = 2
-STATE_FLY = 3
-STATE_LAST_STEP = 4
-STATE_READY = 5
-
-RIGHT_LEG = 0
-LEFT_LEG = 1
 
 class Robot:
     '''
@@ -76,33 +65,6 @@ class Robot:
         self.q = self.q0
         self.display(self.q0)
 
-        self.torsoInitPosition = self.data.oMi[self.torsoId]
-        self.leftFootInitPosition = self.data.oMi[self.leftLegLastJointId]
-        self.rightFootInitPosition = self.data.oMi[self.rightLegLastJointId]
-
-        self.state = STATE_REST
-        self.flyingLeg = RIGHT_LEG
-
-        self.cost = None 
-
-    def move(self, q): 
-        se3.forwardKinematics(self.model, self.data, q)
-
-    def get_pos(self, jointId, q=None): 
-        if q is None:
-            return self.data.oMi[jointId]
-        elif isinstance(q, np.ndarray):
-            se3.forwardKinematics(self.model, self.data, q)
-            return self.data.oMi[jointId]
-
-    def get_torso_pos(self, q=None): 
-        return self.get_pos(self.torsoId, q)
-
-    def get_left_foot_pos(self, q=None):
-        return self.get_pos(self.leftLegLastJointId, q)
-
-    def get_right_foot_pos(self, q=None): 
-        return self.get_pos(self.rightLegLastJointId, q)
 
     def createTorso(self, rootId=0, prefix='', jointPlacement=None): 
         color   = [red,green,blue,transparency] = [1,1,0.78,0.5]
@@ -200,10 +162,6 @@ if __name__ == "__main__":
     # print q0
     # q0 = np.zeros(robot.model.nq)
     robot.display(q0)
-    print robot.leftLegLastJointId
-    print robot.rightLegLastJointId
-    print robot.leftFootInitPosition
-    print robot.rightFootInitPosition
     # print robot.solve()
     # print robot.test_solve()
 
