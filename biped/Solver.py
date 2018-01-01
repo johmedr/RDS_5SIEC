@@ -58,7 +58,10 @@ class Solver:
     def raw_cost(self, x=None): 
         jointToMovePose = robot.data.oMi[self.jointToMoveId]
 
-        cost = log(se3.SE3(jointToMovePose.rotation - self.targetPose.rotation, jointToMovePose.translation - self.targetPose.translation))
+        # cost = log(se3.SE3(jointToMovePose.rotation - self.targetPose.rotation, jointToMovePose.translation - self.targetPose.translation))
+        cost = log(se3.SE3(jointToMovePose.rotation.transpose() * self.targetPose.rotation, self.targetPose.translation - jointToMovePose.translation))
+        # cost = log(jointToMovePose.inverse().act(self.targetPose))
+
         # print vars(cost * cost)
         return np.linalg.norm(cost.vector, ord='fro')
 
@@ -75,7 +78,8 @@ class Solver:
         if self.eqcons is () and self.ieqcons is (): 
             return fmin_bfgs(
                         self.cost, 
-                        self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1])
+                        self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
+                        maxiter=10)
         else: 
             return fmin_slsqp(
                         self.cost, self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
@@ -97,25 +101,28 @@ if __name__ == "__main__":
     offset_torso = robot.data.oMi[T_ID].translation
 
     target_left = se3.SE3(robot.data.oMi[LF_ID])
-    target_right = se3.SE3(robot.data.oMi[RF_ID])
 
-    s_left = Solver(LF_ID, target_left, robot, allowedDoFIds=range(7, 15), color=BLUE)
+    target_right = se3.SE3(robot.data.oMi[RF_ID])
+    target_right.translation += np2pin(np.array([0., 0., 0.5]))
+
+    s_left = Solver(LF_ID - 1, target_left, robot, allowedDoFIds=range(7, 15), color=BLUE, ieqcons=([lambda x: x[3]]))
+    s_right = Solver(RF_ID - 1, target_right, robot, allowedDoFIds=range(15,21), color=GREEN)
+    q[15:21] = s_right.minimize()
+    q = robot.display(q)
 
     L_PAS = 1.
-    H_PAS = 0.5
+    H_PAS = 0.9
     T = 100.
     z0 = 4. * H_PAS / L_PAS
 
-    x0 = pin2np(target_left.translation)[0] - 0.5
-    x1 = pin2np(target_left.translation)[0] + 0.5
+    x0 = pin2np(target_left.translation)[0] - L_PAS/2
+    x1 = pin2np(target_left.translation)[0] + L_PAS/2
 
-    for t in range(1000): 
+    for t in range(int(T)): 
         x = x0 + (L_PAS * t**2 * (3*T - 2 * t)) / T**3 
         z = - z0 * (x - x0) * (x - x1) / L_PAS
-        target_left.translation = np.matrix([x, 0.5, z])
+        target_left.translation = np.matrix([x, 0.5, z + 0.5])
         s_left.set_target_pose(target_left)
         q[7:15] = s_left.minimize() 
         q = robot.display(q)
         
-    
-        raw_input()
