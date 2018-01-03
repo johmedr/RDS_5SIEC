@@ -109,6 +109,7 @@ if __name__ == "__main__":
     x1 = pin2np(target_left.translation)[0] + L_PAS/2
 
     for t in range(int(T)): 
+        
         x = x0 + (L_PAS * t**2 * (3*T - 2 * t)) / T**3 
         z = - z0 * (x - x0) * (x - x1) / L_PAS
         target_left.translation = np.matrix([x, 0.5, z + 0.])
