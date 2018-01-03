@@ -9,16 +9,6 @@ from Robot import Robot
 from display import Display
 from utils import *
 
-
-def rand_xyz(): 
-    return np.random.rand(3)
-
-def anim(robot, nb_loop, q0, q): 
-    delta_q = (q - q0)
-    print delta_q
-    for i in range(0,nb_loop):
-        robot.display(q0+delta_q*i/nb_loop)
-
 class Solver: 
     """
     Class Solver: 
@@ -105,13 +95,13 @@ if __name__ == "__main__":
     target_right = se3.SE3(robot.data.oMi[RF_ID])
     target_right.translation += np2pin(np.array([0., 0., 0.5]))
 
-    s_left = Solver(LF_ID - 1, target_left, robot, allowedDoFIds=range(7, 15), color=BLUE, ieqcons=([lambda x: x[3]]))
+    s_left = Solver(LF_ID , target_left, robot, allowedDoFIds=range(7, 15), color=BLUE, ieqcons=([lambda x: x[3]]))
     s_right = Solver(RF_ID - 1, target_right, robot, allowedDoFIds=range(15,21), color=GREEN)
     q[15:21] = s_right.minimize()
     q = robot.display(q)
 
     L_PAS = 1.
-    H_PAS = 0.9
+    H_PAS = 0.5
     T = 100.
     z0 = 4. * H_PAS / L_PAS
 
@@ -121,7 +111,7 @@ if __name__ == "__main__":
     for t in range(int(T)): 
         x = x0 + (L_PAS * t**2 * (3*T - 2 * t)) / T**3 
         z = - z0 * (x - x0) * (x - x1) / L_PAS
-        target_left.translation = np.matrix([x, 0.5, z + 0.5])
+        target_left.translation = np.matrix([x, 0.5, z + 0.])
         s_left.set_target_pose(target_left)
         q[7:15] = s_left.minimize() 
         q = robot.display(q)
