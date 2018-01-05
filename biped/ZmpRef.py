@@ -8,8 +8,8 @@ class ZmpRef (object):
         assert(isinstance(footsteps, FootSteps))
         self.footsteps = footsteps
 
-        self.steps = []
-
+    def get_trajectory_duration(self): 
+        return self.footsteps.time[-1]
 
     # Operator ()
     def __call__ (self, t):
