@@ -9,6 +9,8 @@ from Robot import Robot
 from display import Display
 from utils import *
 
+from copy import copy
+
 class Solver: 
     """
     Class Solver: 
@@ -21,7 +23,7 @@ class Solver:
     """
     def __init__(self, jointToMoveId, targetPose, robot, allowedDoFIds=None, eqcons=(), ieqcons=(), display=True, color=None):
         self.jointToMoveId = jointToMoveId
-        self.targetPose = targetPose
+        self.targetPose = se3.SE3(targetPose)
         self.robot = robot
         self.q = np.copy(self.robot.q)
 
@@ -46,7 +48,7 @@ class Solver:
             self.robot.viewer.place("world/target_j" + str(self.jointToMoveId), self.targetPose)
 
     def raw_cost(self, x=None): 
-        jointToMovePose = robot.data.oMi[self.jointToMoveId]
+        jointToMovePose = self.robot.data.oMi[self.jointToMoveId]
 
         # cost = log(se3.SE3(jointToMovePose.rotation - self.targetPose.rotation, jointToMovePose.translation - self.targetPose.translation))
         cost = log(se3.SE3(jointToMovePose.rotation.transpose() * self.targetPose.rotation, self.targetPose.translation - jointToMovePose.translation))
@@ -56,10 +58,10 @@ class Solver:
         return np.linalg.norm(cost.vector, ord='fro')
 
     def cost(self, x): 
-        q = self.q
+        q = np.copy(self.q)
         for (dof, num) in zip(self.allowedDoFIds, range(len(self.allowedDoFIds))):
             q[dof] = x[num]
-        se3.forwardKinematics(robot.model, robot.data, q)
+        se3.forwardKinematics(self.robot.model, self.robot.data, q)
 
         return self.raw_cost(x)
 
@@ -73,7 +75,8 @@ class Solver:
         else: 
             return fmin_slsqp(
                         self.cost, self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
-                        eqcons=self.eqcons, ieqcons=self.ieqcons)
+                        eqcons=self.eqcons, ieqcons=self.ieqcons, 
+                        iter=10)
 
 
 if __name__ == "__main__": 

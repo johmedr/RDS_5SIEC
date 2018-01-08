@@ -109,6 +109,9 @@ class FootSteps:
         i = self.getIndexFromTime(t)
         return self.time[i+1]-t
 
+    def getTrajectoryDuration(self): 
+        return self.time[-1]
+
 
 if __name__ == "__main__": 
     # Define 6 steps forward, starting with the left foot and stoping at the same forward position.

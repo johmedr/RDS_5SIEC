@@ -9,7 +9,7 @@ class ZmpRef (object):
         self.footsteps = footsteps
 
     def get_trajectory_duration(self): 
-        return self.footsteps.time[-1]
+        return self.footsteps.get_trajectory_duration()
 
     # Operator ()
     def __call__ (self, t):

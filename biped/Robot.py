@@ -145,13 +145,13 @@ class Robot:
         self.model.appendBodyToJoint(jointId,se3.Inertia.Identity(),se3.SE3.Identity())
 
         return jointId
-
     
-    def display(self,q):
+    def display(self,q, disp=True):
         se3.forwardKinematics(self.model,self.data,q)
-        for visual in self.visuals:
-            visual.place( self.viewer,self.data.oMi[visual.jointParent] )
-        self.viewer.viewer.gui.refresh()
+        if disp: 
+            for visual in self.visuals:
+                visual.place( self.viewer,self.data.oMi[visual.jointParent] )
+            self.viewer.viewer.gui.refresh()
         self.q = q
         return self.q
 
@@ -167,23 +167,23 @@ if __name__ == "__main__":
     # print robot.test_solve()
 
     # q0[2] = -0.5
-    q0[4] = -0.75 
-    q0[6] = 1.5
-    q0[8] = -0.75 
+    # # q0[4] = -0.75 
+    # # q0[6] = 1.5
+    # q0[8] = -0.75 
 
-    q0[11] = -0.75
-    q0[13] = 1.5
-    q0[15] = -0.75
+    # q0[11] = -0.75
+    # q0[13] = 1.5
+    # q0[15] = -0.75
     robot.display(q0)
     # print robot.solve()
     # x = robot.test_solve()
-    q0[4] = x[0]
-    q0[6] = x[1]
-    q0[8] = x[2]
+    # q0[4] = x[0]
+    # q0[6] = x[1]
+    # q0[8] = x[2]
 
-    q0[11] = x[0]
-    q0[13] = x[1]
-    q0[15] = x[2]
+    # q0[11] = x[0]
+    # q0[13] = x[1]
+    # q0[15] = x[2]
 
     robot.display(q0)
 
