@@ -109,7 +109,7 @@ class FootSteps:
         i = self.getIndexFromTime(t)
         return self.time[i+1]-t
 
-    def getTrajectoryDuration(self): 
+    def get_trajectory_duration(self): 
         return self.time[-1]
 
 

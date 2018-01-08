@@ -75,7 +75,7 @@ class Robot:
         name               = prefix+"torso"
         jointName,bodyName = [name+"_joint",name+"_body"]
         jointPlacement     = jointPlacement if jointPlacement!=None else se3.SE3.Identity()
-        jointId = self.model.addJoint(jointId,se3.JointModelFreeFlyer(),jointPlacement,jointName)
+        jointId = self.model.addJoint(jointId,se3.JointModelTranslation(),jointPlacement,jointName)
         self.model.appendBodyToJoint(jointId,se3.Inertia.Identity(),se3.SE3.Identity())
 
         self.viewer.viewer.gui.addBox('world/'+prefix+'torso',0.5* self.TORSO_LX,0.5*self.TORSO_LY,0.5* self.TORSO_LZ,color)
@@ -166,14 +166,14 @@ if __name__ == "__main__":
     # print robot.solve()
     # print robot.test_solve()
 
-    # q0[2] = -0.5
-    # # q0[4] = -0.75 
-    # # q0[6] = 1.5
-    # q0[8] = -0.75 
+    q0[2] = -0.5
+    q0[4] = -0.75 
+    q0[6] = 1.5
+    q0[8] = -0.75 
 
-    # q0[11] = -0.75
-    # q0[13] = 1.5
-    # q0[15] = -0.75
+    q0[11] = -0.75
+    q0[13] = 1.5
+    q0[15] = -0.75
     robot.display(q0)
     # print robot.solve()
     # x = robot.test_solve()

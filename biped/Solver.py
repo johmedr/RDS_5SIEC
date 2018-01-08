@@ -21,11 +21,14 @@ class Solver:
         - allowedDoFIds (optionnal) : a list of DoF the solver is allowed to move to solve the problem
             If not filled, all the DoF are used
     """
-    def __init__(self, jointToMoveId, targetPose, robot, allowedDoFIds=None, eqcons=(), ieqcons=(), display=True, color=None):
+    def __init__(self, jointToMoveId, targetPose, robot, targetPoseRefJoint=0, allowedDoFIds=None, eqcons=(), ieqcons=(), display=True, color=None):
         self.jointToMoveId = jointToMoveId
-        self.targetPose = se3.SE3(targetPose)
         self.robot = robot
         self.q = np.copy(self.robot.q)
+
+        self.targetPoseRefJoint = targetPoseRefJoint
+
+        self.targetPose = se3.SE3(targetPose)
 
         if allowedDoFIds is None: 
             self.allowedDoFIds = range(0, self.robot.model.nq)
@@ -35,27 +38,38 @@ class Solver:
         self.eqcons = eqcons
         self.ieqcons = ieqcons
 
-        self.display = display 
+        self.display = display         
+
         if self.display: 
             if color is None: 
                 color = [0.7, 0.7, 0.7, 1.]
             robot.viewer.viewer.gui.addBox("world/target_j" + str(jointToMoveId), .1, .2, .3, color) 
-            robot.viewer.place("world/target_j" + str(jointToMoveId), self.targetPose)
+            # robot.viewer.place("world/target_j" + str(jointToMoveId), self.targetPose)
+
+        self.set_target_pose(targetPose)
+
 
     def set_target_pose(self, targetPose): 
         self.targetPose = targetPose
+        reference = self.robot.data.oMi[self.targetPoseRefJoint]
+
+        self.targetPose.translation += reference.translation
+
         if self.display: 
             self.robot.viewer.place("world/target_j" + str(self.jointToMoveId), self.targetPose)
+
+
 
     def raw_cost(self, x=None): 
         jointToMovePose = self.robot.data.oMi[self.jointToMoveId]
 
         # cost = log(se3.SE3(jointToMovePose.rotation - self.targetPose.rotation, jointToMovePose.translation - self.targetPose.translation))
-        cost = log(se3.SE3(jointToMovePose.rotation.transpose() * self.targetPose.rotation, self.targetPose.translation - jointToMovePose.translation))
-        # cost = log(jointToMovePose.inverse().act(self.targetPose))
+        # cost = log(se3.SE3(jointToMovePose.rotation.transpose() * self.targetPose.rotation, self.targetPose.translation - jointToMovePose.translation))
+        cost = log(jointToMovePose.inverse() * self.targetPose)
 
         # print vars(cost * cost)
         return np.linalg.norm(cost.vector, ord='fro')
+        # return np.linalg.norm(pin2np(jointToMovePose.translation - self.targetPose.translation))
 
     def cost(self, x): 
         q = np.copy(self.q)
@@ -71,7 +85,7 @@ class Solver:
             return fmin_bfgs(
                         self.cost, 
                         self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
-                        maxiter=10)
+                        maxiter=100)
         else: 
             return fmin_slsqp(
                         self.cost, self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
@@ -82,41 +96,62 @@ class Solver:
 if __name__ == "__main__": 
     robot = Robot() 
 
-    T_ID = 1
-    LF_ID = 8 
-    RF_ID = 15
+    T_ID = robot.torsoId
+    LF_ID = robot.leftLegLastJointId
+    RF_ID = robot.rightLegLastJointId
 
     RED = [1., 0., 0., 1.]
     GREEN = [0., 1., 0., 1.]
     BLUE = [0., 0., 1., 1.]
     
     q = np.copy(robot.display(robot.q0))
-    offset_torso = robot.data.oMi[T_ID].translation
 
-    target_left = se3.SE3(robot.data.oMi[LF_ID])
+    q[0] = 1
+    q[1] = -1
+    q[2] -= 0.5
 
-    target_right = se3.SE3(robot.data.oMi[RF_ID])
-    target_right.translation += np2pin(np.array([0., 0., 0.5]))
 
-    s_left = Solver(LF_ID , target_left, robot, allowedDoFIds=range(7, 15), color=BLUE, ieqcons=([lambda x: x[3]]))
-    s_right = Solver(RF_ID - 1, target_right, robot, allowedDoFIds=range(15,21), color=GREEN)
-    q[15:21] = s_right.minimize()
-    q = robot.display(q)
+    q[6] = 0.1
+    q[13] = 0.1
 
-    L_PAS = 1.
+    robot.display(q)
+
+    torso_offset_z = robot.data.oMi[T_ID].translation
+
+    raw_input()
+
+    target_left = se3.SE3.Identity()
+    # target_left.translation = np2pin(np.array([0.1, +0.3, -1.0]))
+
+
+    target_right = se3.SE3.Identity()
+    target_right.translation = np2pin(np.array([0.7, -0.3, -2.0]))
+
+    s_left = Solver(LF_ID - 1, target_left, robot, targetPoseRefJoint=T_ID, allowedDoFIds=range(3,10), color=BLUE, ieqcons=([lambda x: x[3]]))
+    s_right = Solver(RF_ID, target_right, robot, targetPoseRefJoint=T_ID, allowedDoFIds=range(10,17), color=GREEN, ieqcons=([lambda x: x[3]]))
+
+    # q = robot.display(q)
+
+    q[3:10] = s_left.minimize()
+    q[10:17] = s_right.minimize()
+    robot.display(q)
+
+    L_PAS = 1.2
     H_PAS = 0.5
-    T = 100.
+    T = 200.
     z0 = 4. * H_PAS / L_PAS
 
-    x0 = pin2np(target_left.translation)[0] - L_PAS/2
-    x1 = pin2np(target_left.translation)[0] + L_PAS/2
+    x0 = - L_PAS/2
+    x1 = L_PAS/2
 
     for t in range(int(T)): 
         
-        x = x0 + (L_PAS * t**2 * (3*T - 2 * t)) / T**3 
-        z = - z0 * (x - x0) * (x - x1) / L_PAS
-        target_left.translation = np.matrix([x, 0.5, z + 0.])
+        x = x0  + (L_PAS * t**2 * (3*T - 2 * t)) / T**3 
+        z = - z0 * (x - x0) * (x - x1) / L_PAS 
+
+        target_left.translation = np.matrix([x, 0.5, z - torso_offset_z[2] + robot.FOOT_LZ + robot.JOINT_SPHERE_SIZE * 0.5])
+
         s_left.set_target_pose(target_left)
-        q[7:15] = s_left.minimize() 
+        q[3:10] = s_left.minimize() 
         q = robot.display(q)
         
