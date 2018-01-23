@@ -21,14 +21,16 @@ class Solver:
         - allowedDoFIds (optionnal) : a list of DoF the solver is allowed to move to solve the problem
             If not filled, all the DoF are used
     """
-    def __init__(self, jointToMoveId, targetPose, robot, targetPoseRefJoint=0, allowedDoFIds=None, eqcons=(), ieqcons=(), display=True, color=None):
+    def __init__(self, jointToMoveId, targetPose=None, robot=None,alternative=False,  targetPoseRefJoint=0,  allowedDoFIds=None, eqcons=(), ieqcons=(), display=True, color=None):
         self.jointToMoveId = jointToMoveId
         self.robot = robot
-        self.q = np.copy(self.robot.q)
+        self.q = self.robot.q
+
+        self.alternative = alternative
 
         self.targetPoseRefJoint = targetPoseRefJoint
 
-        self.targetPose = se3.SE3(targetPose)
+        self.targetPose = None  
 
         if allowedDoFIds is None: 
             self.allowedDoFIds = range(0, self.robot.model.nq)
@@ -46,17 +48,29 @@ class Solver:
             robot.viewer.viewer.gui.addBox("world/target_j" + str(jointToMoveId), .1, .2, .3, color) 
             # robot.viewer.place("world/target_j" + str(jointToMoveId), self.targetPose)
 
-        self.set_target_pose(targetPose)
+        self.tar1=None
+        self.tar2=None
+        self.tar3=None
+
+        if not self.alternative: 
+            self.targetPose = se3.SE3(targetPose)
+            self.set_target_pose(targetPose)
 
 
-    def set_target_pose(self, targetPose): 
-        self.targetPose = targetPose
-        reference = self.robot.data.oMi[self.targetPoseRefJoint]
 
-        self.targetPose.translation += reference.translation
+    def set_target_pose(self, targetPose=None, tar1=None, tar2=None, tar3=None): 
+        if not self.alternative: 
+            self.targetPose = targetPose
+            reference = self.robot.data.oMi[self.targetPoseRefJoint]
 
-        if self.display: 
-            self.robot.viewer.place("world/target_j" + str(self.jointToMoveId), self.targetPose)
+            self.targetPose.translation += reference.translation
+
+            if self.display: 
+                self.robot.viewer.place("world/target_j" + str(self.jointToMoveId), self.targetPose)
+        else: 
+            self.tar1 = tar1
+            self.tar2 = tar2
+            self.tar3 = tar3
 
 
 
@@ -71,13 +85,33 @@ class Solver:
         return np.linalg.norm(cost.vector, ord='fro')
         # return np.linalg.norm(pin2np(jointToMovePose.translation - self.targetPose.translation))
 
+    def cost_alt(self, x=None): 
+        torso_pos = self.robot.data.oMi[self.robot.torsoId]
+        left_pos = self.robot.data.oMi[self.robot.leftLegLastJointId]
+        right_pos = self.robot.data.oMi[self.robot.rightLegLastJointId]
+
+        cost_torso = pin2np(torso_pos.translation - self.tar1.translation)
+        # cost_left = pin2np(left_pos.translation - self.tar2.translation)
+        # cost_right = pin2np(right_pos.translation - self.tar3.translation)
+
+        # cost_torso = log(torso_pos.inverse() * self.tar1)
+        cost_left = log(left_pos.inverse() * self.tar2)
+        cost_right = log(right_pos.inverse() * self.tar3)
+
+        return np.linalg.norm(cost_left.vector, ord='fro') + \
+               np.linalg.norm(cost_right.vector, ord='fro') + \
+               np.linalg.norm(cost_torso) 
+
     def cost(self, x): 
         q = np.copy(self.q)
         for (dof, num) in zip(self.allowedDoFIds, range(len(self.allowedDoFIds))):
             q[dof] = x[num]
         se3.forwardKinematics(self.robot.model, self.robot.data, q)
 
-        return self.raw_cost(x)
+        if not self.alternative: 
+            return self.raw_cost(x)
+        else: 
+            return self.cost_alt(x)
 
 
     def minimize(self): 
@@ -85,12 +119,12 @@ class Solver:
             return fmin_bfgs(
                         self.cost, 
                         self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
-                        maxiter=100)
+                        maxiter=150)
         else: 
             return fmin_slsqp(
                         self.cost, self.q[self.allowedDoFIds[0]:self.allowedDoFIds[-1]+1], 
                         eqcons=self.eqcons, ieqcons=self.ieqcons, 
-                        iter=10)
+                        iter=100)
 
 
 if __name__ == "__main__": 
