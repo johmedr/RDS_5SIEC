@@ -32,17 +32,18 @@ torso_pos = se3.SE3.Identity()
 target_left = se3.SE3.Identity()
 target_right = se3.SE3.Identity()
 
-
-
-solver = Solver(T_ID, alternative=True, robot=robot, color=RED)
+solver = Solver(T_ID, alternative=True, robot=robot, color=RED, ieqcons=(lambda x: x[6], lambda x: x[13]))
+# solver = Solver(T_ID, alternative=True, robot=robot, color=RED)
 
 
 q = robot.display(robot.q0)
+
 q[2] -=0.9
 q[4] = -1.0
 q[6] = 1.5
 q[11] = -1.
 q[13] = 1.5
+
 q = robot.display(q)
 raw_input()
 
@@ -88,15 +89,16 @@ for t_index in range(nSteps):
 		floor_foot = 'right'
 		# target_left.translation = addHeightTo2DPos(footsteps.getLeftNextPosition(t), 0)
 		target_left.translation = flying_foot_pos(footsteps.getLeftPosition(t), footsteps.getLeftNextPosition(t), t,footsteps.getPhaseDuration(t), footsteps.getPhaseStart(t))
-		target_right.translation = addHeightTo2DPos(footsteps.getRightPosition(t), 0)
-
+		# target_right.translation = addHeightTo2DPos(footsteps.getRightPosition(t), 0)
 
 	elif flying_foot == 'right': 
 		floor_foot = 'left'
-		target_left.translation = addHeightTo2DPos(footsteps.getLeftPosition(t), 0)
+		# target_left.translation = addHeightTo2DPos(footsteps.getLeftPosition(t), 0)
 		target_right.translation = flying_foot_pos(footsteps.getRightPosition(t), footsteps.getRightNextPosition(t), t, footsteps.getPhaseDuration(t), footsteps.getPhaseStart(t))
 
-
+	elif flying_foot == 'none': 
+		target_right.translation = addHeightTo2DPos(footsteps.getRightPosition(t), 0)
+		target_left.translation = addHeightTo2DPos(footsteps.getLeftPosition(t), 0)
 	# if flying_foot != prev_flying:
 	# 	prev_flying = flying_foot
 	# 	time_index = footsteps.getIndexFromTime(t)
@@ -106,7 +108,6 @@ for t_index in range(nSteps):
 	# 		target_right = se3.SE3(robot.data.oMi[RF_ID])
 	
 	solver.set_target_pose(tar1=torso_pos, tar2=target_left, tar3=target_right)
-	
 	q = solver.minimize()
 
 	q = robot.display(q)
